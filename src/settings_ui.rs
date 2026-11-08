@@ -130,9 +130,8 @@ pub async fn dns_provider_form(
             <div class="dns-provider-field grid min-w-0 items-center gap-2 sm:grid-cols-[12rem_minmax(0,26rem)]">
                 label(attrs: attributes! { for=(&credential_id) class="dns-provider-cloudflare-label dns-provider-credential-label" }, "API token")
                 label(attrs: attributes! { for=(&credential_id) class="dns-provider-cloudns-label dns-provider-credential-label" }, "API password")
-                input(attrs: attributes! { id=(&credential_id) name="credential" type="password" autocomplete="new-password" required=(!values.credential_saved) aria-invalid=(!values.credential_saved) disabled=(busy) })
+                input(attrs: attributes! { id=(&credential_id) name="credential" type="password" autocomplete="new-password" placeholder=(if values.credential_saved { "Saved — leave blank to keep" } else { "" }) required=(!values.credential_saved) aria-invalid=(!values.credential_saved) disabled=(busy) })
             </div>
-            <p class="dns-provider-hint text-sm text-muted-foreground" hidden=(!values.credential_saved)>"Leave blank to keep the saved credential only when the provider is unchanged."</p>
             <div class="dns-provider-field dns-provider-ttl-field grid min-w-0 items-center gap-2 sm:grid-cols-[12rem_minmax(0,26rem)]">
                 label(attrs: attributes! { for=(&ttl_id) class="dns-provider-required" }, "TTL")
                 <div class="dns-provider-ttl-controls grid min-w-0 gap-2">

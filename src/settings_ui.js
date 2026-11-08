@@ -88,6 +88,7 @@
     const credential = form.querySelector('[name="credential"]');
     const authId = form.querySelector('[name="cloudns_auth_id"]');
     credential.required = provider !== form.dataset.savedProvider;
+    credential.placeholder = credential.required ? '' : 'Saved — leave blank to keep';
     authId.required = provider === 'cloudns';
     for (const input of [form.querySelector('[name="zone"]'), credential, authId]) {
       if (input.required && !input.value.trim()) input.setAttribute('aria-invalid', 'true');
