@@ -1,10 +1,10 @@
-# dns-provider
+# topcoat-dns-provider
 
 A reusable Rust DNS provider client with asynchronous record operations. Applications are responsible for authorization and secure storage of provider credentials.
 
 ```toml
 [dependencies]
-dns-provider = { path = "../dns-provider" }
+topcoat-dns-provider = { path = "../topcoat-dns-provider" }
 ```
 
 ```rust,no_run
