@@ -1,6 +1,6 @@
 use axum::{Router, Json, http::{StatusCode, header}, response::{Html, IntoResponse}, routing::{get, post}};
-use dns_provider::settings_ui::{dns_provider_form, ProviderFormValues, PROVIDER_FORM_CSS, PROVIDER_FORM_JS};
-use dns_provider::components::button::{button, ButtonSize, ButtonVariant};
+use topcoat_dns_provider::settings_ui::{dns_provider_form, ProviderFormValues, PROVIDER_FORM_CSS, PROVIDER_FORM_JS};
+use topcoat_dns_provider::components::button::{button, ButtonSize, ButtonVariant};
 use topcoat::{context::Cx, icon::{icon, iconify::iconify_icon}, view::{attributes, view, ViewExt}};
 
 async fn index() -> Html<String> {
@@ -50,7 +50,7 @@ async fn check_plan(Json(request): Json<PlanRequest>) -> impl IntoResponse {
     let result = async {
         let zone = request.zone.parse().map_err(|_| ())?;
         let token = request.credential.parse().map_err(|_| ())?;
-        dns_provider::check_cloudflare_enterprise(&token, &zone).await.map_err(|_| ())
+        topcoat_dns_provider::check_cloudflare_enterprise(&token, &zone).await.map_err(|_| ())
     }.await;
     match result {
         Ok(enterprise) => ([(header::CACHE_CONTROL, "no-store")], Json(PlanResponse { enterprise })).into_response(),

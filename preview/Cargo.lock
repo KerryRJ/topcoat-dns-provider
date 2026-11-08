@@ -319,27 +319,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dns-provider"
-version = "0.1.0"
-dependencies = [
- "dns-update",
- "reqwest",
- "serde",
- "topcoat",
-]
-
-[[package]]
-name = "dns-provider-preview"
-version = "0.1.0"
-dependencies = [
- "axum",
- "dns-provider",
- "serde",
- "tokio",
- "topcoat",
-]
-
-[[package]]
 name = "dns-update"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1953,6 +1932,27 @@ dependencies = [
  "quote",
  "syn 3.0.9",
  "topcoat-core-grammar",
+]
+
+[[package]]
+name = "topcoat-dns-provider"
+version = "0.1.0"
+dependencies = [
+ "dns-update",
+ "reqwest",
+ "serde",
+ "topcoat",
+]
+
+[[package]]
+name = "topcoat-dns-provider-preview"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "serde",
+ "tokio",
+ "topcoat",
+ "topcoat-dns-provider",
 ]
 
 [[package]]

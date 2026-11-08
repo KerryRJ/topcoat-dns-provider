@@ -7,7 +7,7 @@ publish = false
 [workspace]
 
 [dependencies]
-dns-provider = { path = ".." }
+topcoat-dns-provider = { path = ".." }
 axum = "0.8"
 tokio = { version = "1.54", features = ["macros", "rt-multi-thread", "net"] }
 topcoat = { version = "0.11", default-features = false, features = ["view", "icon-iconify"] }

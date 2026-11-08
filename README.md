@@ -8,7 +8,7 @@ topcoat-dns-provider = { path = "../topcoat-dns-provider" }
 ```
 
 ```rust,no_run
-use dns_provider::{CloudflareToken, DnsProvider, RecordData, RecordType, Ttl, ZoneName};
+use topcoat_dns_provider::{CloudflareToken, DnsProvider, RecordData, RecordType, Ttl, ZoneName};
 
 # async fn example() {
 let token: CloudflareToken = "api-token".parse().unwrap();
