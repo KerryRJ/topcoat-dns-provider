@@ -1,0 +1,36 @@
+/* Include with the host stylesheet; visual colours come from Topcoat theme tokens. */
+.dns-provider-form input:-webkit-autofill,
+.dns-provider-form input:-webkit-autofill:hover,
+.dns-provider-form input:-webkit-autofill:focus { -webkit-text-fill-color: var(--foreground); -webkit-box-shadow: 0 0 0 1000px var(--background) inset; caret-color: var(--foreground); }
+.dns-provider-form .dns-provider-required::after,
+.dns-provider-form:not([data-saved-provider="cloudflare"]):has(select[name="provider"] option[value="cloudflare"]:checked) .dns-provider-cloudflare-label::after,
+.dns-provider-form:not([data-saved-provider="cloudns"]):has(select[name="provider"] option[value="cloudns"]:checked) .dns-provider-cloudns-label::after { content: "*"; color: var(--destructive); margin-inline-start: auto; }
+.dns-provider-form .dns-provider-actions { justify-content: flex-start; justify-self: start; }
+.dns-provider-form .dns-provider-cloudns { display: none; }
+.dns-provider-form :is(.dns-provider-provider-select, .dns-provider-account-type-select) { width: min(100%, 11rem); min-width: 0; }
+.dns-provider-form:has(select[name="provider"] option[value="cloudns"]:checked) .dns-provider-cloudns { display: grid; }
+.dns-provider-form .dns-provider-cloudns-label { display: none; }
+.dns-provider-form:has(select[name="provider"] option[value="cloudns"]:checked) .dns-provider-cloudflare-label,
+.dns-provider-form:has(select[name="provider"] option[value="cloudns"]:checked) .dns-provider-ttl-mode { display: none; }
+.dns-provider-form:has(select[name="provider"] option[value="cloudns"]:checked) .dns-provider-cloudns-label { display: flex; }
+.dns-provider-form .dns-provider-ttl[hidden] { display: none; }
+.dns-provider-form .dns-provider-ttl-error { grid-column: 1 / -1; color: var(--destructive); font-size: 0.875rem; }
+.dns-provider-form .dns-provider-ttl-enterprise { grid-column: 1 / -1; color: var(--muted-foreground); font-size: 0.875rem; }
+.dns-provider-form .dns-provider-ttl-enterprise[data-plan-status="checking"]::before { content: ""; display: inline-block; width: .75rem; height: .75rem; margin-inline-end: .5rem; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: -.1rem; animation: dns-provider-spin .8s linear infinite; }
+@keyframes dns-provider-spin { to { transform: rotate(360deg); } }
+@media (min-width: 40rem) { .dns-provider-form .dns-provider-ttl-field > label { align-self: start; padding-top: 0.6875rem; } }
+.dns-provider-form :is(input, select)[aria-invalid="true"] { border-color: var(--destructive); }
+.dns-provider-form .dns-provider-ttl:has(input[aria-invalid="true"]) :is(.dns-provider-ttl-steps, .dns-provider-ttl-unit) { border-color: var(--destructive); }
+.dns-provider-form:has(select[name="provider"] option[value="cloudflare"]:checked) .dns-provider-ttl-controls { grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); }
+.dns-provider-form .dns-provider-ttl-mode { min-width: 0; }
+.dns-provider-form .dns-provider-ttl { width: min(100%, 11rem); }
+.dns-provider-form .dns-provider-ttl input { min-width: 0; }
+.dns-provider-form .dns-provider-ttl input { border-start-end-radius: 0; border-end-end-radius: 0; }
+.dns-provider-form .dns-provider-ttl input[type="number"] { appearance: textfield; -moz-appearance: textfield; border-right: 0; }
+.dns-provider-form .dns-provider-ttl input::-webkit-inner-spin-button, .dns-provider-form .dns-provider-ttl input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.dns-provider-form .dns-provider-ttl-steps { display: flex; flex-direction: column; border-block: 1px solid var(--border); }
+.dns-provider-form .dns-provider-ttl-step { display: flex; flex: 1; align-items: center; justify-content: center; width: 1.5rem; color: var(--muted-foreground); background: transparent; cursor: pointer; }
+.dns-provider-form .dns-provider-ttl-step:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 10%, transparent); }
+.dns-provider-form .dns-provider-ttl-step:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.dns-provider-form .dns-provider-ttl-step:disabled { opacity: .5; cursor: default; }
+.dns-provider-form .dns-provider-ttl-unit { display: flex; align-items: center; padding: 0 0.75rem; border: 1px solid var(--border); border-left: 0; border-start-end-radius: 0.5rem; border-end-end-radius: 0.5rem; color: var(--muted-foreground); background: color-mix(in srgb, var(--foreground) 5%, transparent); font-size: 0.875rem; }
