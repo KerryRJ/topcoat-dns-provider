@@ -9,7 +9,7 @@ pub const PROVIDER_FORM_JS: &str = include_str!("settings_ui.js");
 
 use crate::{
     ClouDnsAuthentication,
-    components::{button::{button, ButtonVariant}, input::input, label::label, select::select},
+    components::{button::{button, ButtonVariant}, input::input, label::label, select::select, switch::switch},
 };
 use topcoat::{
     Result,
@@ -29,6 +29,7 @@ pub enum ProviderFormProvider {
 /// Non-secret values shown in the provider form.
 #[derive(Clone, Debug)]
 pub struct ProviderFormValues {
+    pub enabled: bool,
     pub provider: ProviderFormProvider,
     pub zone: String,
     /// Cloudflare uses 1 for automatic TTL.
@@ -40,6 +41,7 @@ pub struct ProviderFormValues {
 impl Default for ProviderFormValues {
     fn default() -> Self {
         Self {
+            enabled: true,
             provider: ProviderFormProvider::Cloudflare,
             zone: String::new(),
             ttl: "3600".into(),
@@ -65,6 +67,7 @@ pub async fn dns_provider_form(
     #[default] mut attrs: Attributes,
 ) -> Result<impl View> {
     let provider_id = format!("{id}-provider");
+    let enabled_id = format!("{id}-enabled");
     let zone_id = format!("{id}-zone");
     let ttl_id = format!("{id}-ttl");
     let auth_type_id = format!("{id}-auth-type");
@@ -94,6 +97,12 @@ pub async fn dns_provider_form(
     };
     Ok(view! {
         <form class=(topcoat::view::class!("dns-provider-form grid gap-4 text-foreground", attrs.remove("class"))) (attrs) aria-busy=(busy) data-saved-provider=(saved_provider)>
+            <div class="dns-provider-field grid min-w-0 items-center gap-2 sm:grid-cols-[12rem_minmax(0,26rem)]">
+                label(attrs: attributes! { for=(&enabled_id) }, "Enable")
+                switch(attrs: attributes! { id=(&enabled_id) name="enabled" value="true" checked=(values.enabled) disabled=(busy) })
+            </div>
+            <input type="hidden" name="settings_action" value="save" />
+            <fieldset class="dns-provider-settings grid min-w-0 gap-4" disabled=(!values.enabled || busy)>
             <div class="dns-provider-field grid min-w-0 items-center gap-2 sm:grid-cols-[12rem_minmax(0,26rem)]">
                 label(attrs: attributes! { for=(&provider_id) class="dns-provider-required" }, "Provider")
                 select(attrs: attributes! { id=(&provider_id) name="provider" class="dns-provider-provider-select" disabled=(busy) },
@@ -150,6 +159,7 @@ pub async fn dns_provider_form(
                     icon(data: button_icon, attrs: attributes! { class=(icon_class) }) (button_text)
                 )
             </div>
+            </fieldset>
         </form>
     })
 }

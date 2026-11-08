@@ -9,7 +9,7 @@
   function snapshot(form) {
     const value = name => form.querySelector(`[name="${name}"]`).value;
     const provider = value('provider');
-    return JSON.stringify([provider, value('zone'), value('ttl'), ...(provider === 'cloudns' ? [value('cloudns_auth_type'), value('cloudns_auth_id')] : [])]);
+    return JSON.stringify([form.querySelector('[name="enabled"]').checked, provider, value('zone'), value('ttl'), ...(provider === 'cloudns' ? [value('cloudns_auth_type'), value('cloudns_auth_id')] : [])]);
   }
   function updateSave(form) {
     if (!initialValues.has(form)) initialValues.set(form, snapshot(form));
@@ -24,10 +24,13 @@
     const ttl = form.querySelector('[name="ttl"]');
     const validTtl = provider === 'cloudns' ? cloudnsTtls.includes(ttl.valueAsNumber) : (ttl.readOnly || ttl.validity.valid);
     const shortTtl = provider === 'cloudflare' && !ttl.readOnly && Number.isInteger(ttl.valueAsNumber) && ttl.valueAsNumber < 60;
-    const plan = checkPlan(form, shortTtl && validZone && (!credential.required || credential.value.trim() !== ''));
+    const plan = checkPlan(form, form.querySelector('[name="enabled"]').checked && shortTtl && validZone && (!credential.required || credential.value.trim() !== ''));
     const valid = validZone && validTtl && (!shortTtl || plan === 'enterprise') && (!credential.required || credential.value.trim() !== '') && (provider !== 'cloudns' || auth.value.trim() !== '');
     const changed = snapshot(form) !== initialValues.get(form) || credential.value.trim() !== '';
-    form.querySelector('button[type="submit"]').disabled = form.getAttribute('aria-busy') === 'true' || !valid || !changed;
+    form.querySelector('button[type="submit"]').disabled = !form.querySelector('[name="enabled"]').checked || form.getAttribute('aria-busy') === 'true' || !valid || !changed;
+  }
+  function updateEnabled(form) {
+    form.querySelector('.dns-provider-settings').disabled = !form.querySelector('[name="enabled"]').checked || form.getAttribute('aria-busy') === 'true';
   }
   function checkPlan(form, needed) {
     const zone = form.querySelector('[name="zone"]').value.trim();
@@ -138,6 +141,16 @@
   document.addEventListener('change', event => {
     const form = event.target.closest('.dns-provider-form');
     if (!form) return;
+    if (event.target.matches('[name="enabled"]')) {
+      updateEnabled(form);
+      updateSave(form);
+      const action = form.querySelector('[name="settings_action"]');
+      action.value = 'enabled';
+      const noValidate = form.noValidate;
+      form.noValidate = true;
+      try { form.requestSubmit(); } finally { form.noValidate = noValidate; action.value = 'save'; }
+      return;
+    }
     if (event.target.matches('[name="cloudns_auth_type"]')) updateAuthLabel(form);
     if (!event.target.matches('[name="provider"], .dns-provider-ttl-mode select')) { updateSave(form); return; }
     const provider = form.querySelector('[name="provider"]');
@@ -168,8 +181,8 @@
     updateRequired(form);
     updateSave(form);
   });
-  document.addEventListener('dns-provider:refresh', event => { if (event.target.matches('.dns-provider-form')) { if (!previousProviders.has(event.target)) previousProviders.set(event.target, event.target.querySelector('[name="provider"]').value); updateAuthLabel(event.target); updateRequired(event.target); validateTtl(event.target); updateSave(event.target); } });
-  const initialize = () => document.querySelectorAll('.dns-provider-form').forEach(form => { previousProviders.set(form, form.querySelector('[name="provider"]').value); updateAuthLabel(form); validateTtl(form); updateRequired(form); updateSave(form); });
+  document.addEventListener('dns-provider:refresh', event => { if (event.target.matches('.dns-provider-form')) { if (!previousProviders.has(event.target)) previousProviders.set(event.target, event.target.querySelector('[name="provider"]').value); updateEnabled(event.target); updateAuthLabel(event.target); updateRequired(event.target); validateTtl(event.target); updateSave(event.target); } });
+  const initialize = () => document.querySelectorAll('.dns-provider-form').forEach(form => { previousProviders.set(form, form.querySelector('[name="provider"]').value); updateEnabled(form); updateAuthLabel(form); validateTtl(form); updateRequired(form); updateSave(form); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize);
   else initialize();
 })();

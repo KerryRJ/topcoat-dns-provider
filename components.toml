@@ -17,3 +17,7 @@ file = 'src/components\label.rs'
 [registries.topcoat.components.select]
 hash = "sha256:044fb72b888ef18e16ed17feeb495010f9aaad8fde8b0933ff750e66d612c9ff"
 file = 'src/components\select.rs'
+
+[registries.topcoat.components.switch]
+hash = "sha256:ce9a0c7be3ac7187f0935c193bec82f8587953c8a85fdbaf29c08d9593365c36"
+file = 'src/components\switch.rs'

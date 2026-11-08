@@ -2,3 +2,4 @@ pub mod button;
 pub mod input;
 pub mod label;
 pub mod select;
+pub mod switch;

@@ -5,10 +5,43 @@ use std::future::Future;
 /// this value directly in UI responses or logs.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct DnsProviderSettings {
+    /// Whether the host should use this configuration for DNS operations.
+    #[serde(default = "default_enabled")]
+    pub enabled: bool,
     pub zone: crate::ZoneName,
     /// TTL in seconds; Cloudflare uses 1 to indicate automatic TTL.
     pub ttl: crate::Ttl,
     pub provider: ProviderCredentials,
+}
+
+fn default_enabled() -> bool {
+    true
+}
+
+impl DnsProviderSettings {
+    /// Build a client only when enabled. Reload settings and rebuild the client
+    /// after changes; previously constructed clients are not revoked.
+    pub fn enabled_provider(
+        &self,
+        timeout: Option<std::time::Duration>,
+    ) -> Result<Option<crate::DnsProvider>, dns_update::Error> {
+        if !self.enabled {
+            return Ok(None);
+        }
+        let provider = match &self.provider {
+            ProviderCredentials::Cloudflare { token } => {
+                crate::DnsProvider::cloudflare(token, self.zone.clone(), timeout)?
+            }
+            ProviderCredentials::Cloudns { authentication, password } => {
+                let auth = match authentication {
+                    ClouDnsAuthentication::AuthId(id) => crate::ClouDnsAuth::AuthId(id),
+                    ClouDnsAuthentication::SubAuthId(id) => crate::ClouDnsAuth::SubAuthId(id),
+                };
+                crate::DnsProvider::cloudns(auth, password, self.zone.clone(), timeout)?
+            }
+        };
+        Ok(Some(provider))
+    }
 }
 
 /// Provider-specific credentials. These values must be encrypted at rest.
@@ -79,10 +112,19 @@ mod tests {
     }
 
     #[test]
+    fn old_settings_default_to_enabled() {
+        let settings: DnsProviderSettings = serde_json::from_str(
+            r#"{"zone":"example.com","ttl":300,"provider":{"provider":"cloudflare","token":"secret"}}"#,
+        ).unwrap();
+        assert!(settings.enabled);
+    }
+
+    #[test]
     fn generic_store_round_trips_settings() {
         async fn exercise<S: DnsProviderStore<Error = Infallible>>(store: &S) {
             assert!(store.load().await.unwrap().is_none());
             let settings = DnsProviderSettings {
+                enabled: false,
                 zone: "example".parse().unwrap(),
                 ttl: crate::Ttl::seconds(300).unwrap(),
                 provider: ProviderCredentials::Cloudns {
@@ -92,6 +134,11 @@ mod tests {
             };
             store.save(&settings).await.unwrap();
             let loaded = store.load().await.unwrap().unwrap();
+            assert!(!loaded.enabled);
+            assert!(loaded.enabled_provider(None).unwrap().is_none());
+            let mut enabled = loaded.clone();
+            enabled.enabled = true;
+            assert!(enabled.enabled_provider(None).unwrap().is_some());
             assert_eq!(loaded.zone.as_str(), "example");
             assert_eq!(loaded.ttl, crate::Ttl::seconds(300).unwrap());
             assert!(

@@ -36,7 +36,7 @@ Run `cargo test` to test the crate. Successful local tests do not verify live pr
 ## Settings storage
 
 Implement `DnsProviderStore` for an application-owned, scoped store. Its async
-`load` and `save` methods exchange `DnsProviderSettings`, including the
+`load` and `save` methods exchange `DnsProviderSettings`, including the enabled state,
 zone, TTL and typed Cloudflare or ClouDNS credentials. `load` returns `None` if
 there is no saved configuration; `save` replaces the full configuration. Preserve
 a saved credential before calling `save` when a form submits a blank secret.
@@ -45,9 +45,17 @@ these settings directly to a browser or write them to logs. Stores select their 
 application or tenant scope. The trait supports generic callers and Send futures;
 it is not object-safe. The crate does not provide a database implementation.
 
+Hosts can call `settings.enabled_provider(None)?` to obtain `Some(DnsProvider)`
+when enabled or `None` when disabled, and use `settings.ttl` for writes. Reload
+settings and replace any cached client after a change; disabling does not revoke
+clients already constructed. Hosts using the direct constructors must check
+`enabled` themselves before DNS operations.
+Disabling retains the configuration and credentials. Existing serialized settings
+without this field default to enabled for compatibility.
+
 ## Provider settings form
 
-Use `settings_ui::dns_provider_form` with a unique `id`, a `ProviderFormValues` containing only non-secret values (use `ProviderFormProvider::Cloudflare` or `ProviderFormProvider::Cloudns { authentication }`, with `ClouDnsAuthentication` for the ClouDNS account ID), and form `attrs` specifying the host's action and method. The form submits `provider`, `zone`, `ttl`, `cloudns_auth_type`, `cloudns_auth_id`, and `credential`. ClouDNS account fields are shown when ClouDNS is selected. The host validates the fields and handles the submission asynchronously. A blank credential can retain a saved credential only when the provider is unchanged; require a new credential when changing providers. Never populate the password field with a stored secret. Set `credential_saved` only for the currently saved provider.
+Use `settings_ui::dns_provider_form` with a unique `id`, a `ProviderFormValues` containing only non-secret values (use `ProviderFormProvider::Cloudflare` or `ProviderFormProvider::Cloudns { authentication }`, with `ClouDnsAuthentication` for the ClouDNS account ID), and form `attrs` specifying the host's action and method. Set `ProviderFormValues.enabled` from the saved `DnsProviderSettings.enabled`. The checkbox submits `enabled=true` when checked and omits it when unchecked; the host must treat an absent `enabled` field as false and persist it. The form also submits `provider`, `zone`, `ttl`, `cloudns_auth_type`, `cloudns_auth_id`, and `credential`. ClouDNS account fields are shown when ClouDNS is selected. The host validates the fields and handles the submission asynchronously. A blank credential can retain a saved credential only when the provider is unchanged; require a new credential when changing providers. Never populate the password field with a stored secret. Set `credential_saved` only for the currently saved provider.
 
 Include `settings_ui::PROVIDER_FORM_CSS` and `settings_ui::PROVIDER_FORM_JS` once on pages containing the form. The script switches between Cloudflare's automatic TTL (submitted as `1`) and a user-entered TTL in seconds, and returns to seconds when switching to ClouDNS.
 
@@ -60,6 +68,8 @@ For Cloudflare TTLs from 30 to 59 seconds, provide `data-cloudflare-plan-url` in
 3. Enter the zone name and token in the application. Store the token encrypted in the application, never in browser storage or logs. The short-TTL check reads subscription metadata; it does not create or modify DNS records. A successful plan check does not guarantee a later DNS write will succeed.
 
 The script enables Save only when the form has valid changes. After a successful save, re-render the form with the saved values so they become the new baseline; after inserting or changing a form dynamically, dispatch a bubbling `dns-provider:refresh` event on it. Hosts must still validate and authorize submissions server-side.
+
+Changing the Enable switch automatically submits the form with `settings_action=enabled`, bypassing provider-field validation. The host must capture the submitted form data synchronously in its submit handler, persist only the enabled state, retain the existing provider configuration and credentials, and re-render with the persisted state after success or failure. An unchecked switch omits `enabled`; treat that as false. Disabled provider fields are omitted from submissions. Normal Save submissions use `settings_action=save` and require the usual validation. Disable the switch while either request is in flight. The provider fields and Save button are disabled whenever the switch is off.
 
 Set `busy` while saving to disable the controls and display progress; the host owns the submission state and feedback. Supply a unique ID per form. The form uses Topcoat semantic theme tokens and `dns-provider-*` CSS classes, and forwards form attributes including additional classes. Include `settings_ui::PROVIDER_FORM_CSS` in the host stylesheet for provider-specific field visibility, and include this crate's source in the host's Tailwind class scanning so its utility classes are generated. The host owns theme selection and can override the classes. Application-domain settings are a separate host component and are not saved by this form.
 
