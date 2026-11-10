@@ -14,6 +14,12 @@ use topcoat_dns_provider::settings_ui::{
     PROVIDER_FORM_CSS, PROVIDER_FORM_JS, ProviderFormValues, dns_provider_form,
 };
 
+mod plan_request;
+mod plan_response;
+
+use plan_request::PlanRequest;
+use plan_response::PlanResponse;
+
 async fn index() -> Html<String> {
     let values = ProviderFormValues::default();
     let cx = &Cx::new();
@@ -58,15 +64,6 @@ async fn styles() -> impl IntoResponse {
     )
 }
 
-#[derive(serde::Deserialize)]
-struct PlanRequest {
-    zone: String,
-    credential: String,
-}
-#[derive(serde::Serialize)]
-struct PlanResponse {
-    enterprise: bool,
-}
 async fn check_plan(Json(request): Json<PlanRequest>) -> impl IntoResponse {
     let result = async {
         let zone = request.zone.parse().map_err(|_| ())?;

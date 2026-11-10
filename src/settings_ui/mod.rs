@@ -2,10 +2,17 @@
 //!
 //! The host handles submission, validation, authorization and secure storage.
 //! Never pass saved secrets to this component.
+
+mod provider_form_provider;
+mod provider_form_values;
+
+pub use provider_form_provider::ProviderFormProvider;
+pub use provider_form_values::ProviderFormValues;
+
 /// CSS for provider-specific field visibility. Hosts should include this in their stylesheet.
-pub const PROVIDER_FORM_CSS: &str = include_str!("settings_ui.css");
+pub const PROVIDER_FORM_CSS: &str = include_str!("../settings_ui.css");
 /// Browser behavior for provider-specific TTL selection. Include once on pages using the form.
-pub const PROVIDER_FORM_JS: &str = include_str!("settings_ui.js");
+pub const PROVIDER_FORM_JS: &str = include_str!("../settings_ui.js");
 
 use crate::{
     ClouDnsAuthentication,
@@ -23,39 +30,6 @@ use topcoat::{
     icon::{icon, iconify::iconify_icon},
     view::{Attributes, View, attributes, component, view},
 };
-
-/// Provider-specific, non-secret values shown in the form.
-#[derive(Clone, Debug)]
-pub enum ProviderFormProvider {
-    Cloudflare,
-    Cloudns {
-        authentication: ClouDnsAuthentication,
-    },
-}
-
-/// Non-secret values shown in the provider form.
-#[derive(Clone, Debug)]
-pub struct ProviderFormValues {
-    pub enabled: bool,
-    pub provider: ProviderFormProvider,
-    pub zone: String,
-    /// Cloudflare uses 1 for automatic TTL.
-    pub ttl: String,
-    /// Whether the selected provider already has a stored credential.
-    pub credential_saved: bool,
-}
-
-impl Default for ProviderFormValues {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            provider: ProviderFormProvider::Cloudflare,
-            zone: String::new(),
-            ttl: "3600".into(),
-            credential_saved: false,
-        }
-    }
-}
 
 /// DNS provider form. `id` must be unique on the page. The host supplies the
 /// form action and method through `attrs`, and re-renders with `busy` while saving.

@@ -1,11 +1,6 @@
+use super::ProviderKind;
 use crate::{RecordData, RecordType, Ttl, ZoneName};
 use dns_update::{DnsUpdater, Error};
-
-#[derive(Clone, Copy)]
-pub(crate) enum ProviderKind {
-    Cloudflare,
-    Cloudns,
-}
 
 /// An asynchronous DNS client scoped to one provider and zone.
 pub struct DnsProvider {

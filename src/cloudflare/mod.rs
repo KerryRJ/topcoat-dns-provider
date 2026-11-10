@@ -1,37 +1,17 @@
+mod api_response;
+mod cloudflare_plan_check_error;
+mod rate_plan;
+mod subscription;
+mod zone;
+
+pub use cloudflare_plan_check_error::CloudflarePlanCheckError;
+
 use crate::{CloudflareToken, DnsProvider, ZoneName, provider::ProviderKind};
+use api_response::ApiResponse;
 use dns_update::{DnsUpdater, Error};
 use std::{sync::OnceLock, time::Duration};
-
-/// The zone subscription could not be verified. No credential or provider response is exposed.
-#[derive(Debug)]
-pub struct CloudflarePlanCheckError;
-
-impl std::fmt::Display for CloudflarePlanCheckError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("Could not verify the Cloudflare zone subscription")
-    }
-}
-impl std::error::Error for CloudflarePlanCheckError {}
-
-#[derive(serde::Deserialize)]
-struct ApiResponse<T> {
-    success: bool,
-    result: T,
-}
-#[derive(serde::Deserialize)]
-struct Zone {
-    id: String,
-    name: String,
-}
-#[derive(serde::Deserialize)]
-struct Subscription {
-    rate_plan: Option<RatePlan>,
-    state: Option<String>,
-}
-#[derive(serde::Deserialize)]
-struct RatePlan {
-    id: Option<String>,
-}
+use subscription::{Subscription, classify_subscription};
+use zone::Zone;
 
 /// Check whether the exact zone has an active Enterprise subscription. This performs
 /// read-only Cloudflare API requests and requires zone lookup and Billing Read access.
@@ -91,49 +71,6 @@ pub async fn check_cloudflare_enterprise(
         return Err(CloudflarePlanCheckError);
     }
     classify_subscription(subscription.result)
-}
-
-fn classify_subscription(subscription: Subscription) -> Result<bool, CloudflarePlanCheckError> {
-    let state = subscription
-        .state
-        .as_deref()
-        .ok_or(CloudflarePlanCheckError)?;
-    if !matches!(state, "Trial" | "Provisioned" | "Paid") {
-        return Err(CloudflarePlanCheckError);
-    }
-    let id = subscription
-        .rate_plan
-        .and_then(|p| p.id)
-        .ok_or(CloudflarePlanCheckError)?;
-    match id.as_str() {
-        "enterprise" | "partners_enterprise" => Ok(true),
-        "free" | "lite" | "pro" | "pro_plus" | "business" | "partners_free" | "partners_pro"
-        | "partners_business" => Ok(false),
-        _ => Err(CloudflarePlanCheckError),
-    }
-}
-
-#[cfg(test)]
-mod plan_tests {
-    use super::*;
-
-    #[test]
-    fn only_recognized_active_enterprise_plans_are_accepted() {
-        let plan = |id: Option<&str>, state: Option<&str>| Subscription {
-            rate_plan: id.map(|id| RatePlan {
-                id: Some(id.into()),
-            }),
-            state: state.map(str::to_owned),
-        };
-        assert!(classify_subscription(plan(Some("enterprise"), Some("Paid"))).unwrap());
-        assert!(
-            classify_subscription(plan(Some("partners_enterprise"), Some("Provisioned"))).unwrap()
-        );
-        assert!(!classify_subscription(plan(Some("business"), Some("Paid"))).unwrap());
-        assert!(classify_subscription(plan(Some("enterprise"), Some("Expired"))).is_err());
-        assert!(classify_subscription(plan(Some("unknown"), Some("Paid"))).is_err());
-        assert!(classify_subscription(plan(None, Some("Paid"))).is_err());
-    }
 }
 
 impl DnsProvider {
