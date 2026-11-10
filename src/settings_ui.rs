@@ -13,6 +13,7 @@ use crate::{
 };
 use topcoat::{
     Result,
+    context::Cx,
     icon::{icon, iconify::iconify_icon},
     view::{Attributes, View, attributes, component, view},
 };
@@ -61,6 +62,7 @@ impl Default for ProviderFormValues {
 /// forwarded form attributes and `dns-provider-*` classes allow host styling.
 #[component]
 pub async fn dns_provider_form(
+    cx: &Cx,
     id: &str,
     values: &ProviderFormValues,
     #[default] busy: bool,

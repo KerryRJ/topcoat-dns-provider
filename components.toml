@@ -3,15 +3,15 @@ version = 1
 components_dir = "src/components"
 
 [registries.topcoat.components.button]
-hash = "sha256:1b40f815a96997b28f35b8f385f5849d86ca53ba47fb752a3e795bfc24c3a55d"
+hash = "sha256:53bddb06a7db178a09d1e9395c1edb5e055b5f50107e8d4708ca029ecc1593af"
 file = 'src/components\button.rs'
 
 [registries.topcoat.components.input]
-hash = "sha256:c96f34a75f49d24388eb854b864033954060896ae008e76a229ab306299185fd"
+hash = "sha256:22c01bc78089bfc7e22406af86cfd1e9ba6074f60a169b331dfe3e3882e93912"
 file = 'src/components\input.rs'
 
 [registries.topcoat.components.label]
-hash = "sha256:a8da6e188c553a4d3f859a747d73fa7115dc53470131e331511c597026925992"
+hash = "sha256:89abd07da8fafb8710885adc411a05745c87a4a760b56dea8630feb0fb6d36d4"
 file = 'src/components\label.rs'
 
 [registries.topcoat.components.select]
@@ -19,5 +19,5 @@ hash = "sha256:044fb72b888ef18e16ed17feeb495010f9aaad8fde8b0933ff750e66d612c9ff"
 file = 'src/components\select.rs'
 
 [registries.topcoat.components.switch]
-hash = "sha256:ce9a0c7be3ac7187f0935c193bec82f8587953c8a85fdbaf29c08d9593365c36"
+hash = "sha256:226d9269f1d87bdf43cbddbcea450eb2a11944032dc307c656f8bf806a3d5932"
 file = 'src/components\switch.rs'

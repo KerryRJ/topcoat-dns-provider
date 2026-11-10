@@ -10,8 +10,8 @@ publish = false
 topcoat-dns-provider = { path = ".." }
 axum = "0.8"
 tokio = { version = "1.54", features = ["macros", "rt-multi-thread", "net"] }
-topcoat = { version = "0.11", default-features = false, features = ["view", "icon-iconify"] }
+topcoat = { version = "0.12", default-features = false, features = ["view", "icon-iconify"] }
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
-topcoat = { version = "0.11", default-features = false, features = ["tailwind", "icon-iconify"] }
+topcoat = { version = "0.12", default-features = false, features = ["tailwind", "icon-iconify"] }

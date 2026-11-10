@@ -9,12 +9,10 @@ license = "MIT OR Apache-2.0"
 serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.13", default-features = false, features = ["json", "query", "rustls"] }
 dns-update = "0.6"
-topcoat = { version = "0.11", default-features = false, features = ["ui", "view", "icon-iconify", "tailwind", "font-fontsource", "asset"] }
+topcoat = { version = "0.12", default-features = false, features = ["ui", "view", "icon-iconify", "tailwind", "font-fontsource", "asset"] }
 
 [build-dependencies]
-topcoat = { version = "0.11", default-features = false, features = ["icon-iconify"] }
-
-
+topcoat = { version = "0.12", default-features = false, features = ["icon-iconify"] }
 
 [dev-dependencies]
 serde_json = "1.0"
