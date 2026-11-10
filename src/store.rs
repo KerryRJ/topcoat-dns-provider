@@ -32,7 +32,10 @@ impl DnsProviderSettings {
             ProviderCredentials::Cloudflare { token } => {
                 crate::DnsProvider::cloudflare(token, self.zone.clone(), timeout)?
             }
-            ProviderCredentials::Cloudns { authentication, password } => {
+            ProviderCredentials::Cloudns {
+                authentication,
+                password,
+            } => {
                 let auth = match authentication {
                     ClouDnsAuthentication::AuthId(id) => crate::ClouDnsAuth::AuthId(id),
                     ClouDnsAuthentication::SubAuthId(id) => crate::ClouDnsAuth::SubAuthId(id),

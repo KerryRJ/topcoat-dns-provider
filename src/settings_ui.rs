@@ -9,7 +9,13 @@ pub const PROVIDER_FORM_JS: &str = include_str!("settings_ui.js");
 
 use crate::{
     ClouDnsAuthentication,
-    components::{button::{button, ButtonVariant}, input::input, label::label, select::select, switch::switch},
+    components::{
+        button::{ButtonVariant, button},
+        input::input,
+        label::label,
+        select::select,
+        switch::switch,
+    },
 };
 use topcoat::{
     Result,
@@ -77,7 +83,15 @@ pub async fn dns_provider_form(
     let credential_id = format!("{id}-credential");
     let ttl = &values.ttl;
     let ttl_auto = matches!(values.provider, ProviderFormProvider::Cloudflare) && ttl == "1";
-    let saved_provider = if values.credential_saved { if matches!(values.provider, ProviderFormProvider::Cloudflare) { "cloudflare" } else { "cloudns" } } else { "" };
+    let saved_provider = if values.credential_saved {
+        if matches!(values.provider, ProviderFormProvider::Cloudflare) {
+            "cloudflare"
+        } else {
+            "cloudns"
+        }
+    } else {
+        ""
+    };
     // The controls remain available when switching providers in the browser.
     let (is_cloudns, is_sub_auth, cloudns_auth_id) = match &values.provider {
         ProviderFormProvider::Cloudflare => (false, false, ""),

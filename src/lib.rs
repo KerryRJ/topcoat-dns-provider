@@ -8,8 +8,8 @@ mod provider;
 mod store;
 mod types;
 
-pub use cloudns::ClouDnsAuth;
 pub use cloudflare::{CloudflarePlanCheckError, check_cloudflare_enterprise};
+pub use cloudns::ClouDnsAuth;
 pub use dns_update::{
     CAARecord as Caa, DnsRecord as RecordData, DnsRecordType as RecordType, KeyValue,
     MXRecord as Mx, SRVRecord as Srv, TLSARecord as Tlsa, TlsaCertUsage, TlsaMatching,
