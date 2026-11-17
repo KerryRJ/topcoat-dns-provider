@@ -51,7 +51,7 @@ form.addEventListener('submit', event => {{
  controls.forEach(control => control.disabled = true);
  button.innerHTML = '<span class="inline-block size-4 animate-spin" aria-hidden="true">⟳</span> Saving…';
  document.querySelector('#status').textContent = '';
- setTimeout(() => {{ controls.forEach(control => control.disabled = false); button.innerHTML = original; form.setAttribute('aria-busy', 'false'); form.querySelector('[name=credential]').value = ''; form.dispatchEvent(new Event('dns-provider:refresh', {{ bubbles: true }})); document.querySelector('#status').textContent = 'Preview saved. No data was stored or sent.'; }}, 1200);
+ setTimeout(() => {{ controls.forEach(control => control.disabled = false); button.innerHTML = original; form.setAttribute('aria-busy', 'false'); form.dispatchEvent(new Event('dns-provider:refresh', {{ bubbles: true }})); document.querySelector('#status').textContent = 'Preview saved. No data was stored or sent.'; }}, 1200);
 }});
 </script></body></html>"#
     ))

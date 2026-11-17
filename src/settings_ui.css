@@ -2,8 +2,7 @@
 .dns-provider-form input:-webkit-autofill,
 .dns-provider-form input:-webkit-autofill:hover,
 .dns-provider-form input:-webkit-autofill:focus { -webkit-text-fill-color: var(--foreground); -webkit-box-shadow: 0 0 0 1000px var(--background) inset; caret-color: var(--foreground); }
-.dns-provider-form label.dns-provider-required::after,
-.dns-provider-form:not([data-saved-provider="cloudns"]):has(select[name="provider"] option[value="cloudns"]:checked) label.dns-provider-cloudns-label::after { content: "*"; color: var(--destructive); margin-inline-start: auto; }
+.dns-provider-form label.dns-provider-required::after { content: "*"; color: var(--destructive); margin-inline-start: auto; }
 .dns-provider-form .dns-provider-actions { justify-content: flex-start; justify-self: start; }
 .dns-provider-form .dns-provider-cloudns { display: none; }
 .dns-provider-form :is(.dns-provider-provider-select, .dns-provider-account-type-select) { width: min(100%, 11rem); min-width: 0; }

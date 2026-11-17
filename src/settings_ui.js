@@ -20,16 +20,15 @@
     const validZone = name.length > 0 && name.length <= 253 && name.split('.').every(label => label.length > 0 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label));
     zone.setCustomValidity(validZone ? '' : 'Enter a valid ASCII DNS zone name.');
     if (!validZone) zone.setAttribute('aria-invalid', 'true'); else zone.removeAttribute('aria-invalid');
-    const credential = form.querySelector('[name="credential"]');
     const auth = form.querySelector('[name="cloudns_auth_id"]');
     const ttl = form.querySelector('[name="ttl"]');
     const validTtl = cloudns ? cloudnsTtls.includes(ttl.valueAsNumber) : (ttl.readOnly || ttl.validity.valid);
     const shortTtl = provider === 'cloudflare' && !ttl.readOnly && Number.isInteger(ttl.valueAsNumber) && ttl.valueAsNumber < 60;
-    // The application looks up the saved Cloudflare token, so the browser never sends one.
+    // The application supplies the saved credential from its vault, so the browser never sends one.
     const plan = checkPlan(form, form.querySelector('[name="enabled"]').checked && shortTtl && validZone);
-    const credentialValid = cloudns ? form.dataset.savedProvider === 'cloudns' || credential.value.trim() !== '' : form.dataset.savedProvider === 'cloudflare';
+    const credentialValid = form.dataset.savedProvider === provider;
     const valid = validZone && validTtl && (!shortTtl || plan === 'enterprise') && credentialValid && (!cloudns || auth.value.trim() !== '');
-    const changed = snapshot(form) !== initialValues.get(form) || (cloudns && credential.value.trim() !== '');
+    const changed = snapshot(form) !== initialValues.get(form);
     form.querySelector('button[type="submit"]').disabled = !form.querySelector('[name="enabled"]').checked || form.getAttribute('aria-busy') === 'true' || !valid || !changed;
   }
   function updateEnabled(form) {
@@ -86,18 +85,11 @@
     form.querySelector('.dns-provider-auth-id-label').textContent = type.value === 'sub_auth_id' ? 'Sub-account ID' : 'Account ID';
   }
   function updateRequired(form) {
-    const provider = form.querySelector('[name="provider"]').value;
-    const cloudns = provider === 'cloudns';
-    const cloudnsSaved = form.dataset.savedProvider === 'cloudns';
-    const credential = form.querySelector('[name="credential"]');
+    const cloudns = form.querySelector('[name="provider"]').value === 'cloudns';
     const authId = form.querySelector('[name="cloudns_auth_id"]');
-    // The credential input belongs to ClouDNS; Cloudflare tokens live only in the application vault.
-    credential.required = cloudns && !cloudnsSaved;
-    credential.placeholder = cloudns && cloudnsSaved ? 'Saved — leave blank to keep' : '';
-    // A hidden ClouDNS password must never be submitted while Cloudflare is selected.
-    credential.disabled = !cloudns || form.getAttribute('aria-busy') === 'true';
+    // Credentials live only in the application vault; this form submits no secret.
     authId.required = cloudns;
-    for (const input of [form.querySelector('[name="zone"]'), credential, authId]) {
+    for (const input of [form.querySelector('[name="zone"]'), authId]) {
       if (input.required && !input.value.trim()) input.setAttribute('aria-invalid', 'true');
       else if (input.validity.valid) input.removeAttribute('aria-invalid');
     }
@@ -106,7 +98,7 @@
     const status = form.querySelector('.dns-provider-credential-status');
     if (!status) return;
     // A saved credential belongs to the saved provider, not to whichever provider is selected now.
-    const stored = form.querySelector('[name="provider"]').value === 'cloudflare' && form.dataset.savedProvider === 'cloudflare';
+    const stored = form.dataset.savedProvider === form.querySelector('[name="provider"]').value;
     status.dataset.credentialStatus = stored ? 'stored' : 'missing';
     status.textContent = stored ? 'Stored in vault' : 'Not stored in vault';
   }

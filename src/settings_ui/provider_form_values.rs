@@ -8,8 +8,8 @@ pub struct ProviderFormValues {
     pub zone: String,
     /// Cloudflare uses 1 for automatic TTL.
     pub ttl: String,
-    /// Whether the selected provider's credential is stored in the host vault.
-    /// The Cloudflare form shows this as plain status text.
+    /// Whether the saved provider's credential is stored in the host vault.
+    /// The form shows this as plain status text for either provider.
     pub credential_saved: bool,
 }
 
