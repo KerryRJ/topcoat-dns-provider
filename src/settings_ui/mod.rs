@@ -34,9 +34,11 @@ use topcoat::{
 /// DNS provider form. `id` must be unique on the page. The host supplies the
 /// form action and method through `attrs`, and re-renders with `busy` while saving.
 /// Fields submit `provider`, `zone`, `ttl`, `cloudns_auth_type`,
-/// `cloudns_auth_id`, and `credential`. A blank credential means retain the
+/// `cloudns_auth_id`, and the ClouDNS `credential`. The Cloudflare API token has
+/// no input: the form only displays whether it is stored in the host vault, and
+/// the host uses its stored token. A blank ClouDNS credential means retain the
 /// existing secret only if it belongs to the selected provider. Hosts must
-/// validate all values and require credentials for a new provider.
+/// validate all values and require a ClouDNS credential for a new provider.
 ///
 /// Tailwind semantic colour tokens follow the host's light/dark theme. The
 /// forwarded form attributes and `dns-provider-*` classes allow host styling.
@@ -57,8 +59,9 @@ pub async fn dns_provider_form(
     let credential_id = format!("{id}-credential");
     let ttl = &values.ttl;
     let ttl_auto = matches!(values.provider, ProviderFormProvider::Cloudflare) && ttl == "1";
+    let is_cloudflare = matches!(values.provider, ProviderFormProvider::Cloudflare);
     let saved_provider = if values.credential_saved {
-        if matches!(values.provider, ProviderFormProvider::Cloudflare) {
+        if is_cloudflare {
             "cloudflare"
         } else {
             "cloudns"
@@ -73,6 +76,12 @@ pub async fn dns_provider_form(
             ClouDnsAuthentication::AuthId(id) => (true, false, id.as_str()),
             ClouDnsAuthentication::SubAuthId(id) => (true, true, id.as_str()),
         },
+    };
+    let token_saved = is_cloudflare && values.credential_saved;
+    let token_status = if token_saved {
+        "Stored in vault"
+    } else {
+        "Not stored in vault"
     };
     let button_text = if busy { "Saving…" } else { "Save" };
     let button_icon = if busy {
@@ -118,9 +127,12 @@ pub async fn dns_provider_form(
                 </div>
             </div>
             <div class="dns-provider-field grid min-w-0 items-center gap-2 sm:grid-cols-[12rem_minmax(0,26rem)]">
-                label(attrs: attributes! { for=(&credential_id) class="dns-provider-cloudflare-label dns-provider-credential-label" }, "API token")
+                <span class="dns-provider-cloudflare-label dns-provider-credential-label">"API token"</span>
+                <p class="dns-provider-cloudflare-label dns-provider-credential-status min-w-0 text-sm text-muted-foreground" role="status" data-credential-status=(if token_saved { "stored" } else { "missing" })>(token_status)</p>
                 label(attrs: attributes! { for=(&credential_id) class="dns-provider-cloudns-label dns-provider-credential-label" }, "API password")
-                input(attrs: attributes! { id=(&credential_id) name="credential" type="password" autocomplete="new-password" placeholder=(if values.credential_saved { "Saved — leave blank to keep" } else { "" }) required=(!values.credential_saved) aria-invalid=(!values.credential_saved) disabled=(busy) })
+                <div class="dns-provider-cloudns min-w-0">
+                    input(attrs: attributes! { id=(&credential_id) name="credential" type="password" autocomplete="new-password" placeholder=(if is_cloudns && values.credential_saved { "Saved — leave blank to keep" } else { "" }) required=(is_cloudns && !values.credential_saved) aria-invalid=(is_cloudns && !values.credential_saved) disabled=(busy || !is_cloudns) })
+                </div>
             </div>
             <div class="dns-provider-field dns-provider-ttl-field grid min-w-0 items-center gap-2 sm:grid-cols-[12rem_minmax(0,26rem)]">
                 label(attrs: attributes! { for=(&ttl_id) class="dns-provider-required" }, "TTL")

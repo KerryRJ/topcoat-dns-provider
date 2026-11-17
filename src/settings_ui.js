@@ -14,6 +14,7 @@
   function updateSave(form) {
     if (!initialValues.has(form)) initialValues.set(form, snapshot(form));
     const provider = form.querySelector('[name="provider"]').value;
+    const cloudns = provider === 'cloudns';
     const zone = form.querySelector('[name="zone"]');
     const name = zone.value.trim().replace(/\.$/, '');
     const validZone = name.length > 0 && name.length <= 253 && name.split('.').every(label => label.length > 0 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label));
@@ -22,11 +23,13 @@
     const credential = form.querySelector('[name="credential"]');
     const auth = form.querySelector('[name="cloudns_auth_id"]');
     const ttl = form.querySelector('[name="ttl"]');
-    const validTtl = provider === 'cloudns' ? cloudnsTtls.includes(ttl.valueAsNumber) : (ttl.readOnly || ttl.validity.valid);
+    const validTtl = cloudns ? cloudnsTtls.includes(ttl.valueAsNumber) : (ttl.readOnly || ttl.validity.valid);
     const shortTtl = provider === 'cloudflare' && !ttl.readOnly && Number.isInteger(ttl.valueAsNumber) && ttl.valueAsNumber < 60;
-    const plan = checkPlan(form, form.querySelector('[name="enabled"]').checked && shortTtl && validZone && (!credential.required || credential.value.trim() !== ''));
-    const valid = validZone && validTtl && (!shortTtl || plan === 'enterprise') && (!credential.required || credential.value.trim() !== '') && (provider !== 'cloudns' || auth.value.trim() !== '');
-    const changed = snapshot(form) !== initialValues.get(form) || credential.value.trim() !== '';
+    // The application looks up the saved Cloudflare token, so the browser never sends one.
+    const plan = checkPlan(form, form.querySelector('[name="enabled"]').checked && shortTtl && validZone);
+    const credentialValid = cloudns ? form.dataset.savedProvider === 'cloudns' || credential.value.trim() !== '' : form.dataset.savedProvider === 'cloudflare';
+    const valid = validZone && validTtl && (!shortTtl || plan === 'enterprise') && credentialValid && (!cloudns || auth.value.trim() !== '');
+    const changed = snapshot(form) !== initialValues.get(form) || (cloudns && credential.value.trim() !== '');
     form.querySelector('button[type="submit"]').disabled = !form.querySelector('[name="enabled"]').checked || form.getAttribute('aria-busy') === 'true' || !valid || !changed;
   }
   function updateEnabled(form) {
@@ -34,7 +37,6 @@
   }
   function checkPlan(form, needed) {
     const zone = form.querySelector('[name="zone"]').value.trim();
-    const credential = form.querySelector('[name="credential"]').value;
     const endpoint = form.dataset.cloudflarePlanUrl;
     const note = form.querySelector('.dns-provider-ttl-enterprise');
     let state = planChecks.get(form);
@@ -43,14 +45,14 @@
       note.hidden = true;
       return 'unchecked';
     }
-    if (!state || state.zone !== zone || state.credential !== credential || state.endpoint !== endpoint) {
+    if (!state || state.zone !== zone || state.endpoint !== endpoint) {
       if (state) { clearTimeout(state.timer); state.controller.abort(); }
-      state = { zone, credential, endpoint, status: 'checking', controller: new AbortController() };
+      state = { zone, endpoint, status: 'checking', controller: new AbortController() };
       planChecks.set(form, state);
       state.timer = setTimeout(async () => {
         try {
           if (!endpoint || new URL(endpoint, location.href).origin !== location.origin) throw new Error();
-          const response = await fetch(endpoint, { method: 'POST', credentials: 'same-origin', redirect: 'error', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ zone, credential }), signal: state.controller.signal });
+          const response = await fetch(endpoint, { method: 'POST', credentials: 'same-origin', redirect: 'error', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ zone, credential: '' }), signal: state.controller.signal });
           if (!response.ok) throw new Error();
           const data = await response.json();
           if (typeof data.enterprise !== 'boolean') throw new Error();
@@ -85,15 +87,28 @@
   }
   function updateRequired(form) {
     const provider = form.querySelector('[name="provider"]').value;
+    const cloudns = provider === 'cloudns';
+    const cloudnsSaved = form.dataset.savedProvider === 'cloudns';
     const credential = form.querySelector('[name="credential"]');
     const authId = form.querySelector('[name="cloudns_auth_id"]');
-    credential.required = provider !== form.dataset.savedProvider;
-    credential.placeholder = credential.required ? '' : 'Saved — leave blank to keep';
-    authId.required = provider === 'cloudns';
+    // The credential input belongs to ClouDNS; Cloudflare tokens live only in the application vault.
+    credential.required = cloudns && !cloudnsSaved;
+    credential.placeholder = cloudns && cloudnsSaved ? 'Saved — leave blank to keep' : '';
+    // A hidden ClouDNS password must never be submitted while Cloudflare is selected.
+    credential.disabled = !cloudns || form.getAttribute('aria-busy') === 'true';
+    authId.required = cloudns;
     for (const input of [form.querySelector('[name="zone"]'), credential, authId]) {
       if (input.required && !input.value.trim()) input.setAttribute('aria-invalid', 'true');
       else if (input.validity.valid) input.removeAttribute('aria-invalid');
     }
+  }
+  function updateCredentialStatus(form) {
+    const status = form.querySelector('.dns-provider-credential-status');
+    if (!status) return;
+    // A saved credential belongs to the saved provider, not to whichever provider is selected now.
+    const stored = form.querySelector('[name="provider"]').value === 'cloudflare' && form.dataset.savedProvider === 'cloudflare';
+    status.dataset.credentialStatus = stored ? 'stored' : 'missing';
+    status.textContent = stored ? 'Stored in vault' : 'Not stored in vault';
   }
   function validateTtl(form) {
     const ttl = form.querySelector('[name="ttl"]');
@@ -180,10 +195,11 @@
     field.hidden = auto;
     validateTtl(form);
     updateRequired(form);
+    updateCredentialStatus(form);
     updateSave(form);
   });
-  document.addEventListener('dns-provider:refresh', event => { if (event.target.matches('.dns-provider-form')) { if (!previousProviders.has(event.target)) previousProviders.set(event.target, event.target.querySelector('[name="provider"]').value); updateEnabled(event.target); updateAuthLabel(event.target); updateRequired(event.target); validateTtl(event.target); updateSave(event.target); } });
-  const initialize = () => document.querySelectorAll('.dns-provider-form').forEach(form => { previousProviders.set(form, form.querySelector('[name="provider"]').value); updateEnabled(form); updateAuthLabel(form); validateTtl(form); updateRequired(form); updateSave(form); });
+  document.addEventListener('dns-provider:refresh', event => { if (event.target.matches('.dns-provider-form')) { if (!previousProviders.has(event.target)) previousProviders.set(event.target, event.target.querySelector('[name="provider"]').value); updateEnabled(event.target); updateAuthLabel(event.target); updateRequired(event.target); updateCredentialStatus(event.target); validateTtl(event.target); updateSave(event.target); } });
+  const initialize = () => document.querySelectorAll('.dns-provider-form').forEach(form => { previousProviders.set(form, form.querySelector('[name="provider"]').value); updateEnabled(form); updateAuthLabel(form); validateTtl(form); updateRequired(form); updateCredentialStatus(form); updateSave(form); });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize);
   else initialize();
 })();
